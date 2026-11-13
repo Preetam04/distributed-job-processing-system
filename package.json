@@ -3,10 +3,27 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev:api": "bun --watch src/index.ts",
+    "dev:worker": "bun --watch src/worker/worker.ts",
+    "start": "NODE_ENV=production bun src/index.ts",
+    "build": "",
+    "worker:A": "cross-env WORKER_NAME=A  bun src/worker/worker.ts",
+    "worker:B": "cross-env WORKER_NAME=B  bun src/worker/worker.ts",
+    "worker:C": "cross-env WORKER_NAME=C  bun src/worker/worker.ts",
+    "workers": "concurrently \"bun run worker:A\" \"bun run worker:B\" \"bun run worker:C\""
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/express": "^5.0.6",
+    "concurrently": "^10.0.7",
+    "cross-env": "^10.1.0"
   },
   "peerDependencies": {
     "typescript": "^7"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "redis": "^6.3.1"
   }
 }
