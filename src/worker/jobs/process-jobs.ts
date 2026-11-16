@@ -6,6 +6,9 @@ import { addJob } from "../../modules/jobs/jobs.repository";
 
 export async function processJobs(job: Job) {
   // console.log(job.type === JobType.SEND_EMAIL);
+  if (job.attempts >= 3) {
+    throw new Error("Job attempts exhausted");
+  }
 
   switch (job.type) {
     case JobType.SEND_EMAIL:
