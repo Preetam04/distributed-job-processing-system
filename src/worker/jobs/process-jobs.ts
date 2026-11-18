@@ -7,7 +7,7 @@ import { addJob } from "../../modules/jobs/jobs.repository";
 export async function processJobs(job: Job) {
   // console.log(job.type === JobType.SEND_EMAIL);
   if (job.attempts >= 3) {
-    throw new Error("Job attempts exhausted");
+    throw new Error(`Job ${job.id} attempts exhausted`);
   }
 
   switch (job.type) {
@@ -21,7 +21,7 @@ export async function processJobs(job: Job) {
       await processImage(job.payload);
       break;
     default:
-      throw new Error("Job type not valid");
+      throw new Error(`Job ${job.id} type not valid`);
       break;
   }
 }

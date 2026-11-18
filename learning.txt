@@ -1,0 +1,7 @@
+
+12/11/26
+so what's happening in  current flow is that 
+when a job is moved from waiting to processing after the worker finishes it's execution it runs the acknowledgement function which checks if the job exists in processing queue with job_id and then removes it. all this is a atomic operation implemented with the help of lua script
+
+
+the heart beat mechanism

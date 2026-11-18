@@ -68,3 +68,13 @@ export async function acknowledgeJob(jobId: string): Promise<boolean> {
   ]);
   return Number(result) === 1;
 }
+
+export async function updateHeartbeat(workerName: string) {
+  await redis.hSet("heartbeat", workerName, Date.now().toString());
+}
+
+export async function allWorkersHeartbeat() {
+  const data = await redis.hGetAll("heartbeat");
+
+  return data;
+}
