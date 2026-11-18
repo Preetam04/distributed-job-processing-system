@@ -1,13 +1,14 @@
+import { ATTEMPTS_EXHAUSTED, INVALID_JOB_TYPES } from "../../errors";
 import { JobType, type Job } from "../../types/jobs.types";
 import { processEmail } from "./email-job";
 import { generateReport } from "./generate-report";
 import { processImage } from "./process-image";
-import { addJob } from "../../modules/jobs/jobs.repository";
 
 export async function processJobs(job: Job) {
   // console.log(job.type === JobType.SEND_EMAIL);
   if (job.attempts >= 3) {
-    throw new Error(`Job ${job.id} attempts exhausted`);
+    console.log(`Job ${job.id} attempts exhausted`);
+    throw new Error(ATTEMPTS_EXHAUSTED);
   }
 
   switch (job.type) {
@@ -21,7 +22,8 @@ export async function processJobs(job: Job) {
       await processImage(job.payload);
       break;
     default:
-      throw new Error(`Job ${job.id} type not valid`);
+      console.log(`Job ${job.id} type not valid`);
+      throw new Error(INVALID_JOB_TYPES);
       break;
   }
 }

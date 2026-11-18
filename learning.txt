@@ -5,3 +5,7 @@ when a job is moved from waiting to processing after the worker finishes it's ex
 
 
 the heart beat mechanism
+it is used to check if the worker is alive bu updating it's time  after a certain intervals. if the worker is dead the timestamp won't be updated
+
+
+lease mechanism
