@@ -1,5 +1,8 @@
+import { throwRetryError } from "./process-jobs";
+
 async function processEmail(data: JSON) {
   // console.log(`Worker [${process.env.WORKER_NAME}] starting: processing Email`);
+  throwRetryError();
 
   await new Promise((resolve, reject) => setTimeout(resolve, 500));
 

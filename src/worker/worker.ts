@@ -1,4 +1,4 @@
-import { ATTEMPTS_EXHAUSTED, INVALID_JOB_TYPES } from "../errors";
+import { ATTEMPTS_EXHAUSTED, INVALID_JOB_TYPES, JOB_FAILED } from "../errors";
 import redis from "../infrastructure/redis/redis-client";
 import * as jobRepository from "../modules/jobs/jobs.repository";
 import { processJobs } from "./jobs/process-jobs";
@@ -33,11 +33,14 @@ async function startWorker() {
     const interval = setInterval(() => {
       // @ts-ignore
       jobRepository.createJobLease(job.id, workerName).catch(console.error);
+      // console.log("lease renewed");
     }, 20000);
 
     try {
       // it will say that the jobs is being processed
       // console.log("job fetched");
+
+      // console.log("job started processing");
 
       await processJobs(job);
 
@@ -53,6 +56,11 @@ async function startWorker() {
         error?.message === INVALID_JOB_TYPES
       ) {
         await jobRepository.moveToDeadLetterQueue(job.id);
+      } else if (error?.message === JOB_FAILED) {
+        console.log("retry job called : " + job.attempts);
+        await jobRepository.retryJob(job);
+      } else {
+        console.error("Unexpected job processing error:", error);
       }
     } finally {
       clearInterval(interval);

@@ -11,6 +11,7 @@
     "worker:A": "cross-env WORKER_NAME=A  bun src/worker/worker.ts",
     "worker:B": "cross-env WORKER_NAME=B  bun src/worker/worker.ts",
     "worker:C": "cross-env WORKER_NAME=C  bun src/worker/worker.ts",
+    "recovery": "bun src/worker/job-recovery.ts",
     "workers": "concurrently \"bun run worker:A\" \"bun run worker:B\" \"bun run worker:C\""
   },
   "devDependencies": {

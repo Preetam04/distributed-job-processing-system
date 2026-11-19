@@ -9,6 +9,15 @@ services:
       - redisdata:/data
     restart: unless-stopped
 
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
   # api:
   #   build: .
   #   command: bun run dev:api

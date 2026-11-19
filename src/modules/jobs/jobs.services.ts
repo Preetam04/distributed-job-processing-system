@@ -9,7 +9,7 @@ export async function addJobs(data: Job) {
   const job: Job = {
     id: crypto.randomUUID(),
     payload: data.payload || {},
-    attempts: 0,
+    attempts: 1,
     type: data.type,
   };
 

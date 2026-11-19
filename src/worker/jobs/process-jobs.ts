@@ -1,4 +1,8 @@
-import { ATTEMPTS_EXHAUSTED, INVALID_JOB_TYPES } from "../../errors";
+import {
+  ATTEMPTS_EXHAUSTED,
+  INVALID_JOB_TYPES,
+  JOB_FAILED,
+} from "../../errors";
 import { JobType, type Job } from "../../types/jobs.types";
 import { processEmail } from "./email-job";
 import { generateReport } from "./generate-report";
@@ -6,7 +10,7 @@ import { processImage } from "./process-image";
 
 export async function processJobs(job: Job) {
   // console.log(job.type === JobType.SEND_EMAIL);
-  if (job.attempts >= 3) {
+  if (job.attempts > 3) {
     console.log(`Job ${job.id} attempts exhausted`);
     throw new Error(ATTEMPTS_EXHAUSTED);
   }
@@ -26,4 +30,10 @@ export async function processJobs(job: Job) {
       throw new Error(INVALID_JOB_TYPES);
       break;
   }
+}
+
+export function throwRetryError() {
+  const random = Math.ceil(Math.random() * 10);
+  if (random <= 2) throw new Error(JOB_FAILED);
+  // console.log("retry job called");
 }

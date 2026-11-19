@@ -50,11 +50,13 @@ export async function acknowledgeJob(jobId: string): Promise<boolean> {
     local jobs = redis.call("LRANGE", KEYS[1], 0, -1)
 
     for _, rawJob in ipairs(jobs) do
-        local success, job = pcall(cjson.decode, rawJob)
+      local success, job = pcall(cjson.decode, rawJob)
 
-        if success and job.id == ARGV[1] then
-            return redis.call("LREM", KEYS[1], 1, rawJob)
-        end
+      if success and job.id == ARGV[1] then
+        redis.call("LREM", KEYS[1], 1, rawJob)
+        redis.call("ZREM", KEYS[2], ARGV[1])
+        return 1
+      end
     end
 
     return 0
@@ -63,10 +65,12 @@ export async function acknowledgeJob(jobId: string): Promise<boolean> {
   const result = await redis.sendCommand([
     "EVAL",
     script,
-    "1",
+    "2",
     processingQueue,
+    "lease",
     jobId,
   ]);
+
   return Number(result) === 1;
 }
 
@@ -92,6 +96,7 @@ export async function createJobLease(jobId: string, workerName: string) {
 }
 
 export async function recoverExpiredLeaseJobs() {
+  // Redis returns all job IDs whose expiration timestamp is less than or equal to the current time.
   const expiredJobIds = await redis.zRangeByScore(
     "lease",
     "-inf",
@@ -134,4 +139,16 @@ export async function moveToDeadLetterQueue(jobId: string) {
 
 export async function getAllDeadLetterQueueJobs() {
   return await redis.hGetAll(deadLetterJobs);
+}
+
+export async function retryJob(job: Job) {
+  const newJob: Job = {
+    ...job,
+    attempts: job.attempts + 1,
+  };
+
+  await addJob(newJob);
+
+  await redis.lRem(processingQueue, 1, JSON.stringify(job));
+  await redis.zRem("lease", job.id);
 }
