@@ -13,7 +13,10 @@ so basically each job will be allocated to a particular woker for a lease of 30 
 if the lease expires it means it was not renewed that means the worker has failed so we have to process that job futher
 
 
-current insights
 - Lease is not being remove after the job is removed from processing
     - It was because the acknowledgement function was only removing jobs from the processing queue, we also had to remove the job id from the lease as well
-- 
+
+
+
+idempotency:
+    if a worker finshes a job and crashes before acknowledgement, then we should make sure that the job is not executed twice

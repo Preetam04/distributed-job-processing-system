@@ -95,7 +95,23 @@ export async function createJobLease(jobId: string, workerName: string) {
   return;
 }
 
+// 1. Find expired lease IDs
+// 2. Fetch processing jobs
+// 3. Find matching jobs
+// 4. Increment attempts
+// 5. Add job back to queue
+// 6. Remove job from processing
+// 7. Remove lease
 export async function recoverExpiredLeaseJobs() {
+  let script = `
+  local time = redis.call("TIME")
+
+  local currentTime = (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
+
+
+    local jobs = redis.call("ZRANGEBYSCORE", KEYS[1], "-inf", currentTime)
+  `;
+
   // Redis returns all job IDs whose expiration timestamp is less than or equal to the current time.
   const expiredJobIds = await redis.zRangeByScore(
     "lease",
@@ -113,7 +129,17 @@ export async function recoverExpiredLeaseJobs() {
     .filter(({ job }) => expiredJobIds.includes(job.id));
 
   for (const { rawJob, job } of expiredJobs) {
-    await addJob(job);
+    const updatedJob = {
+      ...job,
+      attempts: job.attempts + 1,
+    };
+
+    if (updatedJob.attempts >= 3) {
+      await moveToDeadLetterQueue(updatedJob);
+    } else {
+      await addJob(job);
+    }
+
     await redis.lRem(processingQueue, 1, rawJob);
     await redis.zRem("lease", job.id);
   }
@@ -151,4 +177,18 @@ export async function retryJob(job: Job) {
 
   await redis.lRem(processingQueue, 1, JSON.stringify(job));
   await redis.zRem("lease", job.id);
+}
+
+export async function markJobExecutionComplete(job: Job) {
+  await redis.set(`finished:${job.id}`, JSON.stringify(job));
+}
+
+export async function jobExecutionComplete(jobId: string): Promise<boolean> {
+  const job = await redis.get(`finished:${jobId}`);
+
+  if (job) {
+    return true;
+  }
+
+  return false;
 }
