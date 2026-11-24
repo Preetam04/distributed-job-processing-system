@@ -48,5 +48,6 @@ export async function processJobs(job: Job) {
 export function throwRetryError() {
   const random = Math.ceil(Math.random() * 10);
   if (random <= 2) throw new Error(JOB_FAILED);
+  // throw new Error(JOB_FAILED);
   // console.log("retry job called");
 }

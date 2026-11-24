@@ -3,6 +3,7 @@ import { PORT } from "./env";
 import { errorMiddleware } from "./shared/middlewares/error.middleware";
 import healthRouter from "./modules/health/health.routes";
 import jobsRouter from "./modules/jobs/jobs.routes";
+// import metricsRouter from "./modules/metrics/metrics.routes";
 import redis from "./infrastructure/redis/redis-client";
 
 export const app = express();
@@ -13,6 +14,7 @@ const commonRoute = "/api/v1";
 
 app.use(`${commonRoute}/health`, healthRouter);
 app.use(`${commonRoute}/jobs`, jobsRouter);
+// app.use(`${commonRoute}/metrics`, metricsRouter);
 
 app.use(errorMiddleware);
 

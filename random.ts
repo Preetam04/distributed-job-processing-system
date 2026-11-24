@@ -1,11 +1,4 @@
-import redis from "./src/infrastructure/redis/redis-client";
-import {
-  allWorkersHeartbeat,
-  getAllDeadLetterQueueJobs,
-  getAllProcessingJobs,
-  getAllWaitingJobs,
-  recoverExpiredLeaseJobs,
-} from "./src/modules/jobs/jobs.repository";
+import * as metricsServices from "./src/modules/metrics/metrics.service";
 
 // setInterval(async () => {
 
@@ -29,3 +22,7 @@ import {
 // }
 
 // console.log(mpp);
+
+const metricsSnapshot = await metricsServices.getMetricsSnapshot();
+
+console.log(metricsSnapshot);

@@ -27,7 +27,7 @@ async function addJob(jobType: JobType | "UNDEFINED_JOB") {
   }
 }
 
-for (let i = 0; i < 25; i++) {
+for (let i = 0; i < 100; i++) {
   const random = Math.ceil(Math.random() * 4) - 1;
 
   const validJob = Object.keys(JobType);

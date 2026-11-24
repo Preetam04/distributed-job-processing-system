@@ -51,12 +51,13 @@ async function startWorker() {
       // console.log(error?.message || "");
 
       if (
-        // @ts-ignore
         error?.message === ATTEMPTS_EXHAUSTED ||
         error?.message === INVALID_JOB_TYPES
       ) {
         await jobRepository.moveToDeadLetterQueue(job.id);
       } else if (error?.message === JOB_FAILED) {
+        // console.log(job);
+
         console.log("retry job called : " + job.attempts);
         await jobRepository.retryJob(job);
       } else {
