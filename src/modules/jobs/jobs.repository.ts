@@ -90,6 +90,7 @@ export async function acknowledgeJob(jobId: string): Promise<boolean> {
 
 export async function updateHeartbeat(workerName: string) {
   await redis.hSet("heartbeat", workerName, Date.now().toString());
+  return await redis.hGetAll("heartbeat");
 }
 
 export async function allWorkersHeartbeat() {

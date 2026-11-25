@@ -8,29 +8,57 @@ services:
     volumes:
       - redisdata:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   redisinsight:
     image: redis/redisinsight:latest
     container_name: redisinsight
     ports:
       - "5540:5540"
+    restart: unless-stopped
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/DockerFile.api
+    environment:
+      - REDIS_URL= redis://redis:6379
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
-  # api:
-  #   build: .
-  #   command: bun run dev:api
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - redis
+  workers:
+    build:
+      context: .
+      dockerfile: docker/DockerFile.workers
+    environment:
+      - REDIS_URL= redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 30s
 
-  # worker:
-  #   build: .
-  #   command: bun run dev:worker
-  #   depends_on:
-  #     - redis
+  recovery:
+    build:
+      context: .
+      dockerfile: docker/DockerFile.recovery
+    environment:
+      - REDIS_URL= redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   redisdata:

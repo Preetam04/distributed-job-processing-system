@@ -3,12 +3,10 @@ import { markJobExecutionComplete } from "../../modules/jobs/jobs.repository";
 import type { Job } from "../../types/jobs.types";
 import { throwRetryError } from "./process-jobs";
 
-async function generateReport(job: Job) {
-  // console.log(
-  //   `Worker [${process.env.WORKER_NAME}] starting: generating Report`,
-  // );
+async function generateReport(job: Job, workerId: string) {
+  // console.log(`Worker [${workerId}] starting: generating Report`);
   // await new Promise((resolve, reject) => setTimeout(resolve, 10000));
-  throwRetryError();
+  // throwRetryError();
 
   // throw new Error(JOB_FAILED);
 
@@ -16,7 +14,7 @@ async function generateReport(job: Job) {
 
   await markJobExecutionComplete(job);
 
-  console.log(`Worker [${process.env.WORKER_NAME}]: Report generated`);
+  console.log(`Worker [${workerId}]: Report generated`);
 }
 
 export { generateReport };

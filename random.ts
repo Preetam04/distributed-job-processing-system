@@ -23,6 +23,13 @@ import * as metricsServices from "./src/modules/metrics/metrics.service";
 
 // console.log(mpp);
 
-const metricsSnapshot = await metricsServices.getMetricsSnapshot();
+// const metricsSnapshot = await metricsServices.getMetricsSnapshot();
 
-console.log(metricsSnapshot);
+// console.log(metricsSnapshot);
+
+// const name = crypto.randomUUID();
+// console.log("BEfore adding " + name);
+
+// process.workerName = name;
+
+// console.log(process?.workerName);

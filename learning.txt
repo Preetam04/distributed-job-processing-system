@@ -20,3 +20,6 @@ if the lease expires it means it was not renewed that means the worker has faile
 
 idempotency:
     if a worker finshes a job and crashes before acknowledgement, then we should make sure that the job is not executed twice
+
+gracefull shutdown in recovery 
+ we create the timeout function such a that we assign the promises resolve to another vaiable and call that resolve when we get sigterm or sigint flag 

@@ -3,7 +3,21 @@ import redis from "../infrastructure/redis/redis-client";
 import * as jobRepository from "../modules/jobs/jobs.repository";
 import { processJobs } from "./jobs/process-jobs";
 
-const workerName = process.env.WORKER_NAME;
+const workerId = crypto.randomUUID();
+console.log(workerId);
+
+// Gracefull shutdown
+let isShuttingDown = false;
+
+const handleShutdown = () => {
+  if (isShuttingDown) return;
+
+  console.log("Worker shutting down...");
+  isShuttingDown = true;
+};
+
+process.on("SIGTERM", handleShutdown);
+process.on("SIGINT", handleShutdown);
 
 // console.log(`Worker [${workerName}] running`);
 
@@ -13,60 +27,73 @@ const workerName = process.env.WORKER_NAME;
 
 async function startWorker() {
   // update heartbeat periodically
-  setInterval(() => {
+
+  const heartbeatInterval = setInterval(async () => {
     // @ts-ignore
-    jobRepository.updateHeartbeat(workerName);
+    jobRepository
+      .updateHeartbeat(workerId)
+      .catch((error) => console.log(error));
+    // console.log(heartbeat);
   }, 3000);
 
-  while (true) {
-    // console.log("Worker entered");
-    // get data from redis if by waiting for the data
-    const job = await jobRepository.waitForNextJob();
+  try {
+    while (!isShuttingDown) {
+      // console.log("Worker entered");
+      // get data from redis if by waiting for the data
+      const job = await jobRepository.waitForNextJob();
 
-    // check job exists
-    if (job === null) continue;
+      if (isShuttingDown && job === null) break;
 
-    // @ts-ignore
-    await jobRepository.createJobLease(job.id, workerName);
+      if (job === null) continue;
 
-    // create job lease
-    const interval = setInterval(() => {
       // @ts-ignore
-      jobRepository.createJobLease(job.id, workerName).catch(console.error);
-      // console.log("lease renewed");
-    }, 20000);
+      await jobRepository.createJobLease(job.id, workerId);
 
-    try {
-      // it will say that the jobs is being processed
-      // console.log("job fetched");
+      // create job lease
+      const interval = setInterval(() => {
+        // @ts-ignore
+        jobRepository.createJobLease(job.id, workerId).catch(console.error);
+        // console.log("lease renewed");
+      }, 20000);
 
-      // console.log("job started processing");
+      try {
+        // it will say that the jobs is being processed
+        // console.log("job fetched");
 
-      await processJobs(job);
+        // console.log("job started processing");
 
-      await jobRepository.acknowledgeJob(job.id);
+        await processJobs(job, workerId);
 
-      // console.log(`Job ${job.id} completed`);
-    } catch (error) {
-      // console.log(error?.message || "");
+        await jobRepository.acknowledgeJob(job.id);
 
-      if (
-        error?.message === ATTEMPTS_EXHAUSTED ||
-        error?.message === INVALID_JOB_TYPES
-      ) {
-        await jobRepository.moveToDeadLetterQueue(job.id);
-      } else if (error?.message === JOB_FAILED) {
-        // console.log(job);
+        // console.log(`Job ${job.id} completed`);
+      } catch (error) {
+        // console.log(error?.message || "");
 
-        console.log("retry job called : " + job.attempts);
-        await jobRepository.retryJob(job);
-      } else {
-        console.error("Unexpected job processing error:", error);
+        if (
+          error?.message === ATTEMPTS_EXHAUSTED ||
+          error?.message === INVALID_JOB_TYPES
+        ) {
+          await jobRepository.moveToDeadLetterQueue(job.id);
+        } else if (error?.message === JOB_FAILED) {
+          // console.log(job);
+
+          console.log("retry job called : " + job.attempts);
+          await jobRepository.retryJob(job);
+        } else {
+          console.error("Unexpected job processing error:", error);
+        }
+      } finally {
+        clearInterval(interval);
       }
-    } finally {
-      clearInterval(interval);
     }
+  } finally {
+    clearInterval(heartbeatInterval);
+    await redis.quit();
   }
 }
 
-startWorker();
+startWorker().catch((error) => {
+  console.error("Worker crashed:", error);
+  process.exitCode = 1;
+});

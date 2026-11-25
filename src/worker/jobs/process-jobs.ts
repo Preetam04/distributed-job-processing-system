@@ -9,7 +9,7 @@ import { processEmail } from "./email-job";
 import { generateReport } from "./generate-report";
 import { processImage } from "./process-image";
 
-export async function processJobs(job: Job) {
+export async function processJobs(job: Job, workerId: string) {
   // console.log(job.type === JobType.SEND_EMAIL);
   if (job.attempts > 3) {
     console.log(`Job ${job.id} attempts exhausted`);
@@ -26,13 +26,13 @@ export async function processJobs(job: Job) {
 
   switch (job.type) {
     case JobType.SEND_EMAIL:
-      await processEmail(job);
+      await processEmail(job, workerId);
       break;
     case JobType.GENERATE_REPORT:
-      await generateReport(job);
+      await generateReport(job, workerId);
       break;
     case JobType.PROCESS_IMAGE:
-      await processImage(job);
+      await processImage(job, workerId);
       break;
     default:
       console.log(`Job ${job.id} type not valid`);
